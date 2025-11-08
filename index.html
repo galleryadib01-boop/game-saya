@@ -1,373 +1,312 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Snake — Adib Edition</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Snake — Responsive Game</title>
   <style>
-    :root {
-      --bg: #0f1724;
-      --panel: #1e293b;
-      --accent: #22c55e;
-      --muted: #94a3b8;
-      --danger: #ef4444;
-      --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    :root{--bg:#0f1724;--card:#0b1220;--accent1:#10b981;--accent2:#06b6d4;--muted:#9aa6b2}
+    html,body{height:100%;margin:0;font-family:Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue', Arial}
+    body{background:linear-gradient(180deg,var(--bg),#071026);display:flex;align-items:center;justify-content:center;color:white}
+    .wrap{width:min(900px,96vw);max-width:1100px;background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);border-radius:14px;box-shadow:0 6px 30px rgba(2,6,23,0.7);overflow:hidden;display:grid;grid-template-columns:1fr 340px}
+    canvas{display:block;width:100%;height:100%;background:linear-gradient(180deg,#07182733,transparent);}
+    .sidebar{padding:18px;box-sizing:border-box;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);min-width:240px}
+    h1{margin:0 0 8px;font-size:20px}
+    p{margin:0 0 12px;color:var(--muted);font-size:13px}
+    .stats{display:flex;gap:8px;margin-bottom:12px}
+    .stat{background:rgba(255,255,255,0.03);padding:8px 10px;border-radius:8px;flex:1;text-align:center}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    button{background:linear-gradient(90deg,var(--accent1),var(--accent2));border:0;padding:10px 12px;border-radius:10px;color:#001;cursor:pointer;font-weight:700}
+    button.secondary{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted);font-weight:600}
+    .small{font-size:12px;padding:6px 8px}
+    .footer{position:relative;margin-top:12px;font-size:12px;color:var(--muted)}
+    /* mobile controls */
+    .touch-pad{display:none;position:absolute;bottom:16px;left:50%;transform:translateX(-50%);gap:10px}
+    .pad-btn{width:60px;height:60px;border-radius:12px;background:rgba(255,255,255,0.03);display:flex;align-items:center;justify-content:center;font-weight:800;color:var(--muted);touch-action:none}
+    @media (max-width:900px){
+      .wrap{grid-template-columns:1fr}
+      .sidebar{order:2}
+      .touch-pad{display:flex}
     }
-
-    * { box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: var(--font);
-      background: radial-gradient(circle at center, #0f1724, #020617);
-      color: #e6eef8;
-      text-align: center;
-    }
-
-    /* MENU UTAMA */
-    #mainMenu {
-      display: none;
-      margin-top: 120px;
-    }
-
-    .menu-buttons {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 15px;
-      margin-top: 30px;
-    }
-
-    button {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 12px 30px;
-      border-radius: 10px;
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 1px;
-      
-      cursor: pointer;
-      transition: transform 0.2s, background 0.3s;
-      width: 220px;
-    }
-
-    button:hover {
-      background: #16a34a;
-      transform: scale(1.05);
-    }
-
-    /* MENU INPUT NAMA */
-    #nameInputMenu, #leaderboardMenu, #settingsMenu {
-      display: none;
-      background: var(--panel);
-      border-radius: 12px;
-      padding: 30px;
-      width: 350px;
-      margin: 100px auto;
-      box-shadow: 0 0 20px rgba(34,197,94,0.3);
-    }
-
-    /* Tambahkan jarak antar tombol di menu input nama */
-    #nameInputMenu button {
-      display: block;
-      margin: 10px auto; /* kasih jarak antar tombol */
-      width: 80%;
-    }
-
-    #playBtn {
-      margin-bottom: 20px; /* tombol “Mulai Bermain” agak turun biar gak nempel dengan tombol “Kembali” */
-    }
-
-
-    input[type="text"] {
-      padding: 10px;
-      width: 80%;
-      border: none;
-      border-radius: 6px;
-      margin-bottom: 15px;
-      font-size: 16px;
-    }
-
-    /* GAME CONTAINER */
-    #gameContainer {
-      display: none;
-      margin-top: 40px;
-    }
-
-    #gameBoard {
-      background: #1e293b;
-      border: 2px solid var(--accent);
-      margin: 20px auto;
-      display: block;
-    }
-
-    /* LEADERBOARD */
-    #leaderboardList {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-
-    #backFromLeaderboard {
-  margin-top: 40px; /* ✅ biar agak turun */
-  background: linear-gradient(135deg, #a39a16, #22c55e); /* 🌈 gradient hijau */
-  color: white;
-  border: none;
-  padding: 12px 30px;
-  border-radius: 10px;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.3s;
-  box-shadow: 0 0 15px rgba(34, 197, 94, 0.4);
-}
-
-#backFromLeaderboard:hover {
-  transform: scale(1.05);
-  box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
-}
-
-
-    #leaderboardList li {
-      background: linear-gradient(135deg, #22c55e, #0ea5e9);
-      color: white;
-      margin: 8px 0;
-      padding: 12px 16px;
-      border-radius: 10px;
-      width: 230px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      box-shadow: 0 0 15px rgba(34,197,94,0.5);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      transition: transform 0.2s ease, box-shadow 0.3s ease;
-    }
-
-    #leaderboardList li:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(14,165,233,0.6);
-    }
-
+    .hint{font-size:12px;color:var(--muted);margin-top:8px}
   </style>
 </head>
 <body>
-  <!-- MENU UTAMA -->
-  <div id="mainMenu">
-    <h1>🐍 Snake — Adib Edition</h1>
-    <div class="menu-buttons">
-      <button id="startGameBtn">Main Game</button>
-      <button id="leaderboardBtn">Leaderboard</button>
-      <button id="settingsBtn">Setting</button>
+  <div class="wrap">
+    <div style="position:relative;min-height:420px;">
+      <canvas id="game"></canvas>
+      <!-- mobile touch pad -->
+      <div class="touch-pad" id="touchPad" style="display:none">
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="pad-btn" data-dir="up">▲</div>
+          <div style="display:flex;gap:10px;justify-content:center">
+            <div class="pad-btn" data-dir="left">◀</div>
+            <div style="width:60px"></div>
+            <div class="pad-btn" data-dir="right">▶</div>
+          </div>
+          <div style="display:flex;justify-content:center;margin-top:6px">
+            <div class="pad-btn" data-dir="down">▼</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <h1>Snake — Responsive</h1>
+      <p>Permainan ular modern, responsive untuk laptop & HP. Kontrol: panah / WASD, swipe di HP, atau tombol layar.</p>
+
+      <div class="stats">
+        <div class="stat"><div style="font-size:18px" id="score">0</div><div class="small">Score</div></div>
+        <div class="stat"><div style="font-size:18px" id="best">0</div><div class="small">Highscore</div></div>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn">Mulai</button>
+        <button class="secondary" id="pauseBtn">Pause</button>
+        <button class="secondary" id="resetBtn">Reset</button>
+        <button class="small secondary" id="themeBtn">Ganti Warna</button>
+      </div>
+
+      <div class="footer">
+        <div class="hint">Ukuran kanvas responsive. Putar HP ke landscape untuk pengalaman terbaik.</div>
+        <div style="margin-top:8px">Versi: 1.0 · Simpan skor lokal di browser</div>
+      </div>
     </div>
   </div>
 
-  <!-- INPUT NAMA -->
-  <div id="nameInputMenu">
-    <h2>Masukkan Nama Kamu</h2>
-    <input type="text" id="playerNameInput" placeholder="Contoh: Adib" />
-    <button id="playBtn">Mulai Bermain</button>
-    <button id="backToMenuBtn">Kembali</button>
-  </div>
-
-  <!-- GAME -->
-  <div id="gameContainer">
-    <h2 id="playerNameDisplay"></h2>
-    <canvas id="gameBoard" width="400" height="400"></canvas>
-    <h3>Skor: <span id="scoreDisplay">0</span></h3>
-    <button id="exitBtn">Keluar</button>
-  </div>
-
-  <!-- LEADERBOARD -->
-  <div id="leaderboardMenu">
-    <h2>🏆 Leaderboard</h2>
-    <ul id="leaderboardList"></ul>
-    <button id="backFromLeaderboard">Kembali</button>
-  </div>
-
-  <!-- SETTINGS -->
-  <div id="settingsMenu">
-    <h2>🎵 Pengaturan Suara</h2>
-    <label>
-      <input type="checkbox" id="soundToggle" checked /> Suara Aktif
-    </label><br><br>
-    <button id="backFromSettings">Kembali</button>
-  </div>
-
   <script>
-    const mainMenu = document.getElementById('mainMenu');
-    const nameInputMenu = document.getElementById('nameInputMenu');
-    const leaderboardMenu = document.getElementById('leaderboardMenu');
-    const settingsMenu = document.getElementById('settingsMenu');
-    const gameContainer = document.getElementById('gameContainer');
+  // Responsive Snake game (single-file). Bisa dimodifikasi.
+  (()=>{
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let dpr = Math.max(1, window.devicePixelRatio || 1);
 
-    const startGameBtn = document.getElementById('startGameBtn');
-    const leaderboardBtn = document.getElementById('leaderboardBtn');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const playBtn = document.getElementById('playBtn');
-    const backToMenuBtn = document.getElementById('backToMenuBtn');
-    const backFromLeaderboard = document.getElementById('backFromLeaderboard');
-    const backFromSettings = document.getElementById('backFromSettings');
-    const playerNameInput = document.getElementById('playerNameInput');
-    const playerNameDisplay = document.getElementById('playerNameDisplay');
-    const scoreDisplay = document.getElementById('scoreDisplay');
-    const gameBoard = document.getElementById('gameBoard');
-    const exitBtn = document.getElementById('exitBtn');
-    const leaderboardList = document.getElementById('leaderboardList');
-    const soundToggle = document.getElementById('soundToggle');
+    // grid settings
+    const baseGrid = 20; // cells per short side
+    let gridSize = baseGrid;
+    let cell = 20;
 
-    let playerName = "";
+    // game state
+    let snake = [{x:6,y:6}];
+    let dir = {x:1,y:0};
+    let nextDir = null;
+    let food = null;
+    let scoreEl = document.getElementById('score');
+    let bestEl = document.getElementById('best');
     let score = 0;
-    let leaderboard = JSON.parse(localStorage.getItem('leaderboard')) || [];
-    let soundEnabled = true;
+    let best = parseInt(localStorage.getItem('snake_best')||0,10);
+    bestEl.textContent = best;
+    let running = false;
+    let lastTime = 0;
+    let speed = 8; // moves per second
+    let accum = 0;
 
-    mainMenu.style.display = 'block'; // tampilkan menu utama pertama kali
+    function resize(){
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
 
-    // ====== NAVIGASI MENU ======
-    startGameBtn.onclick = () => {
-      mainMenu.style.display = 'none';
-      nameInputMenu.style.display = 'block';
-    };
-
-    leaderboardBtn.onclick = () => {
-      mainMenu.style.display = 'none';
-      showLeaderboard();
-    };
-
-    settingsBtn.onclick = () => {
-      mainMenu.style.display = 'none';
-      settingsMenu.style.display = 'block';
-    };
-
-    backToMenuBtn.onclick = () => {
-      nameInputMenu.style.display = 'none';
-      mainMenu.style.display = 'block';
-    };
-
-    backFromLeaderboard.onclick = () => {
-      leaderboardMenu.style.display = 'none';
-      mainMenu.style.display = 'block';
-      
-      
-    };
-
-    backFromSettings.onclick = () => {
-      settingsMenu.style.display = 'none';
-      mainMenu.style.display = 'block';
-    };
-
-    soundToggle.onchange = () => {
-      soundEnabled = soundToggle.checked;
-    };
-
-    // ====== GAME LOGIC ======
-    const ctx = gameBoard.getContext('2d');
-    const grid = 20;
-    let snake, food, dx, dy, game;
-
-    playBtn.onclick = () => {
-      playerName = playerNameInput.value.trim();
-      if (!playerName) {
-        alert("Masukkan nama dulu, Adib!");
-        return;
-      }
-      nameInputMenu.style.display = 'none';
-      gameContainer.style.display = 'block';
-      playerNameDisplay.textContent = "Pemain: " + playerName;
-      startGame();
-    };
-
-    function startGame() {
-      snake = [{ x: 160, y: 200 }];
-      dx = grid;
-      dy = 0;
-      score = 0;
-      food = randomFood();
-      scoreDisplay.textContent = score;
-      document.addEventListener('keydown', changeDirection);
-      game = setInterval(updateGame, 100);
+      // adapt grid to size (approx baseGrid on short side)
+      const short = Math.min(rect.width, rect.height);
+      gridSize = Math.max(12, Math.floor((short/rect.width)*baseGrid));
+      cell = Math.floor(Math.min(rect.width, rect.height) / baseGrid);
+      if (cell < 8) cell = 8;
     }
 
-    function randomFood() {
-      return {
-        x: Math.floor(Math.random() * 20) * grid,
-        y: Math.floor(Math.random() * 20) * grid
-      };
+    // initialize canvas size in JS (keeps aspect)
+    function initCanvas(){
+      // set style height to maintain comfortable play area
+      const winW = window.innerWidth;
+      const winH = window.innerHeight;
+      const preferH = Math.min(720, Math.max(360, Math.floor(winH*0.7)));
+      canvas.style.width = '100%';
+      canvas.style.height = preferH + 'px';
+      resize();
     }
 
-    function updateGame() {
-      const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+    function randPos(){
+      const cols = Math.floor(canvas.width/dpr / cell);
+      const rows = Math.floor(canvas.height/dpr / cell);
+      return {x: Math.floor(Math.random()*cols), y: Math.floor(Math.random()*rows)};
+    }
 
-      if (head.x < 0 || head.x >= 400 || head.y < 0 || head.y >= 400 ||
-          snake.some(seg => seg.x === head.x && seg.y === head.y)) {
-        endGame();
-        return;
+    function placeFood(){
+      let tries = 0;
+      do{
+        food = randPos();
+        tries++;
+      } while(snake.some(s=>s.x===food.x && s.y===food.y) && tries<100);
+    }
+
+    function start(){
+      snake = [{x:6,y:6}];
+      dir = {x:1,y:0}; nextDir = null;
+      score = 0; scoreEl.textContent = score;
+      running = true; lastTime = performance.now(); accum = 0; speed = 8;
+      placeFood();
+      requestAnimationFrame(loop);
+    }
+
+    function gameOver(){
+      running = false;
+      if(score > best){ best = score; localStorage.setItem('snake_best', best); bestEl.textContent = best }
+      // simple flash
+      shakeScreen();
+    }
+
+    function shakeScreen(){
+      const body = document.body;
+      body.animate([{transform:'translateY(0)'},{transform:'translateY(-6px)'},{transform:'translateY(0)'}],{duration:250,iterations:1});
+    }
+
+    function tick(){
+      // apply direction
+      if(nextDir){ dir = nextDir; nextDir = null }
+      const head = {x: snake[0].x + dir.x, y: snake[0].y + dir.y};
+      const cols = Math.floor(canvas.width/dpr / cell);
+      const rows = Math.floor(canvas.height/dpr / cell);
+      // wrap around
+      if(head.x < 0) head.x = cols-1;
+      if(head.y < 0) head.y = rows-1;
+      if(head.x >= cols) head.x = 0;
+      if(head.y >= rows) head.y = 0;
+
+      // collision with self
+      if(snake.some(s=>s.x===head.x && s.y===head.y)){
+        gameOver(); return;
       }
 
       snake.unshift(head);
 
-      if (head.x === food.x && head.y === food.y) {
-        score++;
-        scoreDisplay.textContent = score;
-        food = randomFood();
+      // eat food
+      if(food && head.x===food.x && head.y===food.y){
+        score += 10; scoreEl.textContent = score;
+        // speed up slowly
+        speed = Math.min(22, speed + 0.25);
+        placeFood();
+        playBeep(800,0.06);
       } else {
         snake.pop();
       }
-
-      ctx.clearRect(0, 0, 400, 400);
-      ctx.fillStyle = getAccent();
-      snake.forEach(seg => ctx.fillRect(seg.x, seg.y, grid - 2, grid - 2));
-      ctx.fillStyle = "#ef4444";
-      ctx.fillRect(food.x, food.y, grid - 2, grid - 2);
     }
 
-    function changeDirection(e) {
-      switch (e.key) {
-        case "ArrowUp": if (dy === 0) { dx = 0; dy = -grid; } break;
-        case "ArrowDown": if (dy === 0) { dx = 0; dy = grid; } break;
-        case "ArrowLeft": if (dx === 0) { dx = -grid; dy = 0; } break;
-        case "ArrowRight": if (dx === 0) { dx = grid; dy = 0; } break;
+    function loop(now){
+      if(!running) return draw();
+      const dt = (now - lastTime)/1000; lastTime = now;
+      accum += dt;
+      const interval = 1/speed;
+      while(accum >= interval){ tick(); accum -= interval }
+      draw();
+      requestAnimationFrame(loop);
+    }
+
+    function draw(){
+      // clear
+      ctx.clearRect(0,0,canvas.width/dpr,canvas.height/dpr);
+      // background grid subtle
+      const w = Math.floor(canvas.width/dpr), h = Math.floor(canvas.height/dpr);
+
+      // draw food
+      if(food){
+        drawRoundedRect(food.x*cell+2, food.y*cell+2, cell-4, cell-4, 6, true, false, '#FF4D4D');
       }
+
+      // draw snake gradient
+      for(let i=snake.length-1;i>=0;i--){
+        const s = snake[i];
+        const t = i/snake.length;
+        const gA = lerpColor('#06b6d4','#10b981', t);
+        drawRoundedRect(s.x*cell+1, s.y*cell+1, cell-2, cell-2, 6, true, false, gA);
+      }
+
+      // HUD small
+      ctx.fillStyle = 'rgba(255,255,255,0.04)';
+      ctx.fillRect(6,6,120,34);
+      ctx.fillStyle = '#ffffffbb';
+      ctx.font = '12px system-ui, Arial';
+      ctx.fillText('Score: '+score, 14, 28);
     }
 
-    function getAccent() {
-      return getComputedStyle(document.documentElement).getPropertyValue('--accent');
+    function drawRoundedRect(x,y,w,h,r,fill=true,stroke=false, fillStyle='#fff'){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.arcTo(x+w,y,x+w,y+h,r);
+      ctx.arcTo(x+w,y+h,x,y+h,r);
+      ctx.arcTo(x,y+h,x,y,r);
+      ctx.arcTo(x,y,x+w,y,r);
+      ctx.closePath();
+      if(fill){ ctx.fillStyle = fillStyle; ctx.fill() }
+      if(stroke){ ctx.strokeStyle = stroke; ctx.stroke() }
     }
 
-    function endGame() {
-      clearInterval(game);
-      alert(`Game Over, ${playerName}! Skor kamu: ${score}`);
-      saveLeaderboard(playerName, score);
-      gameContainer.style.display = 'none';
-      mainMenu.style.display = 'block';
+    function lerpColor(a,b,t){
+      // simple hex lerp
+      const A = hexToRgb(a), B = hexToRgb(b);
+      const R = Math.round(A.r + (B.r-A.r)*t);
+      const G = Math.round(A.g + (B.g-A.g)*t);
+      const Bc = Math.round(A.b + (B.b-A.b)*t);
+      return `rgb(${R},${G},${Bc})`;
+    }
+    function hexToRgb(hex){
+      const s = hex.replace('#','');
+      return {r:parseInt(s.substring(0,2),16), g:parseInt(s.substring(2,4),16), b:parseInt(s.substring(4,6),16)}
     }
 
-    exitBtn.onclick = () => {
-      clearInterval(game);
-      gameContainer.style.display = 'none';
-      mainMenu.style.display = 'block';
-    };
+    // input
+    window.addEventListener('keydown', e=>{
+      const k = e.key.toLowerCase();
+      if(['arrowup','w'].includes(k) || k==='w') setDir(0,-1);
+      if(['arrowdown','s'].includes(k) || k==='s') setDir(0,1);
+      if(['arrowleft','a'].includes(k) || k==='a') setDir(-1,0);
+      if(['arrowright','d'].includes(k) || k==='d') setDir(1,0);
+      if(e.key===' '){ running = !running; if(running) { lastTime = performance.now(); requestAnimationFrame(loop) } }
+    });
 
-    // ====== LEADERBOARD ======
-    function saveLeaderboard(name, score) {
-      leaderboard.push({ name, score });
-      leaderboard.sort((a, b) => b.score - a.score);
-      leaderboard = leaderboard.slice(0, 5);
-      localStorage.setItem('leaderboard', JSON.stringify(leaderboard));
+    function setDir(x,y){
+      // prevent reverse
+      if(dir.x === -x && dir.y === -y) return;
+      nextDir = {x,y};
     }
 
-    function showLeaderboard() {
-      leaderboardMenu.style.display = 'block';
-      leaderboardList.innerHTML = leaderboard.length
-        ? leaderboard.map((e, i) => `<li><span>#${i + 1}</span><span>${e.name}</span><span>${e.score}</span></li>`).join("")
-        : "<li>Belum ada skor</li>";
-    }
+    // touch swipe
+    let touchStart = null;
+    window.addEventListener('touchstart', e=>{
+      if(e.touches && e.touches[0]) touchStart = {x:e.touches[0].clientX, y:e.touches[0].clientY}
+    },{passive:true});
+    window.addEventListener('touchend', e=>{
+      if(!touchStart) return; const t = e.changedTouches[0]; const dx = t.clientX - touchStart.x; const dy = t.clientY - touchStart.y; if(Math.hypot(dx,dy) < 20) return; if(Math.abs(dx) > Math.abs(dy)){ if(dx>0) setDir(1,0); else setDir(-1,0)} else { if(dy>0) setDir(0,1); else setDir(0,-1) } touchStart = null;
+    });
+
+    // on-screen pad
+    const pad = document.getElementById('touchPad');
+    Array.from(document.querySelectorAll('.pad-btn')).forEach(btn=>{
+      btn.addEventListener('touchstart', e=>{ e.preventDefault(); const d=btn.dataset.dir; dirFromWord(d); });
+      btn.addEventListener('mousedown', e=>{ const d=btn.dataset.dir; dirFromWord(d); });
+    });
+    function dirFromWord(w){ if(w==='up') setDir(0,-1); if(w==='down') setDir(0,1); if(w==='left') setDir(-1,0); if(w==='right') setDir(1,0); }
+
+    // buttons
+    document.getElementById('startBtn').addEventListener('click', ()=>{ start() });
+    document.getElementById('pauseBtn').addEventListener('click', ()=>{ running = !running; if(running){ lastTime = performance.now(); requestAnimationFrame(loop)} });
+    document.getElementById('resetBtn').addEventListener('click', ()=>{ start() });
+    document.getElementById('themeBtn').addEventListener('click', ()=>{ document.documentElement.style.setProperty('--accent1', randomColor()); document.documentElement.style.setProperty('--accent2', randomColor()); playBeep(500,0.05) });
+
+    function randomColor(){ const r=Math.floor(Math.random()*200)+30; const g=Math.floor(Math.random()*200)+30; const b=Math.floor(Math.random()*200)+30; return `rgb(${r},${g},${b})` }
+
+    // simple beep sound
+    function playBeep(freq, vol=0.05){ try{ const ac = window.AudioContext || window.webkitAudioContext; const ctx = new ac(); const o = ctx.createOscillator(); const g = ctx.createGain(); o.type='sine'; o.frequency.value = freq; g.gain.value = vol; o.connect(g); g.connect(ctx.destination); o.start(); setTimeout(()=>{ o.stop(); ctx.close().catch(()=>{}) },80); } catch(e){} }
+
+    // responsive UI show pad on small screens
+    function checkMobileUI(){ if(window.innerWidth < 900){ pad.style.display = 'flex' } else pad.style.display = 'none' }
+
+    window.addEventListener('resize', ()=>{ dpr = Math.max(1, window.devicePixelRatio || 1); resize(); checkMobileUI(); draw(); });
+
+    // initial
+    initCanvas(); checkMobileUI(); draw();
+    // auto-start on first tap/click for convenience on mobile
+    window.addEventListener('pointerdown', function once(){ if(!running){ start() } window.removeEventListener('pointerdown', once) }, {once:true})
+  })();
   </script>
 </body>
 </html>
